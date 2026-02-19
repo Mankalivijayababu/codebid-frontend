@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-/* PRODUCTION ENV */
-const BASE_URL = import.meta.env.VITE_API_URL;
+/* 🔥 PRODUCTION SAFE ENV */
+const BASE_URL =
+  import.meta.env.VITE_API_URL || "https://codebid-1.onrender.com";
+
 const API = `${BASE_URL}/api`;
 
 export default function AdminLogin() {
@@ -21,10 +23,10 @@ export default function AdminLogin() {
         password,
       });
 
-      localStorage.setItem("adminToken", res.data.token);
+      localStorage.setItem("token", res.data.token);
       localStorage.setItem("adminInfo", JSON.stringify(res.data.admin));
 
-      window.location.href = "/admin/dashboard";
+      window.location.href = "/admin";
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     } finally {
@@ -64,3 +66,5 @@ export default function AdminLogin() {
     </div>
   );
 }
+
+/* styles same as your previous file */

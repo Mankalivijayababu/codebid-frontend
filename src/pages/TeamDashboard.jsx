@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 
 /* 🔥 PRODUCTION SAFE ENV CONFIG */
 const BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000";
+  import.meta.env.VITE_API_URL || "https://codebid-1.onrender.com";
 
 const API = `${BASE_URL}/api`;
 const SOCKET_URL = BASE_URL;
@@ -98,7 +98,12 @@ export default function TeamDashboard() {
 
   /* PLACE BID */
   const placeBid = async () => {
-    if (!bidAmount || alreadyBid || placingBid) return;
+    if (!bidAmount || isNaN(bidAmount)) {
+      setMessage("Enter valid bid");
+      return;
+    }
+
+    if (alreadyBid || placingBid) return;
 
     if (round?.status !== "bidding") {
       setMessage("❌ Bidding not active");
@@ -124,52 +129,76 @@ export default function TeamDashboard() {
   };
 
   return (
-    <div style={{ padding: 40, background: "#05050f", minHeight: "100vh", color: "#fff" }}>
-      <h1>⚡ CODEBID</h1>
+    <div style={styles.page}>
+      <div style={styles.card}>
 
-      <h3>{team?.teamName || "Team"}</h3>
-      <h2>🪙 Coins: {team?.coins || 0}</h2>
+        <h1 style={styles.logo}>⚡ CODEBID</h1>
 
-      {timeLeft > 0 && <h2>⏳ {timeLeft}s</h2>}
+        <h3>{team?.teamName || "Team"}</h3>
+        <h2>🪙 Coins: {team?.coins || 0}</h2>
 
-      {round ? (
-        <>
-          <h2>{round.title}</h2>
-          <p>{round.category}</p>
-          <p>Status: {round.status}</p>
-        </>
-      ) : (
-        <p>Waiting for admin...</p>
-      )}
+        {timeLeft > 0 && <h2>⏳ {timeLeft}s</h2>}
 
-      <hr />
+        {round ? (
+          <>
+            <h2>{round.title}</h2>
+            <p>{round.category}</p>
+            <p>Status: {round.status}</p>
+          </>
+        ) : (
+          <p>Waiting for admin...</p>
+        )}
 
-      {alreadyBid ? (
-        <p>🔒 Your bid is locked</p>
-      ) : (
-        <>
-          <input
-            value={bidAmount}
-            onChange={(e) => setBidAmount(e.target.value)}
-            placeholder="Enter bid"
-          />
-          <button onClick={placeBid} disabled={placingBid}>
-            {placingBid ? "Placing..." : "LOCK BID"}
-          </button>
-        </>
-      )}
+        <hr />
 
-      <hr />
+        {alreadyBid ? (
+          <p>🔒 Your bid is locked</p>
+        ) : (
+          <>
+            <input
+              value={bidAmount}
+              onChange={(e) => setBidAmount(e.target.value)}
+              placeholder="Enter bid"
+              style={styles.input}
+            />
+            <button onClick={placeBid} style={styles.btn}>
+              {placingBid ? "Placing..." : "LOCK BID"}
+            </button>
+          </>
+        )}
 
-      <h3>Leaderboard</h3>
-      {Array.isArray(leaderboard) &&
-        leaderboard.map((t, i) => (
+        <hr />
+
+        <h3>Leaderboard</h3>
+        {leaderboard.map((t, i) => (
           <div key={i}>
             #{t.rank} {t.teamName} — 🪙 {t.coins}
           </div>
         ))}
 
-      {message && <p>{message}</p>}
+        {message && <p style={styles.msg}>{message}</p>}
+      </div>
     </div>
   );
 }
+
+const styles = {
+  page: {
+    minHeight: "100vh",
+    background: "#05050f",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    color: "#fff",
+  },
+  card: {
+    width: 450,
+    padding: 30,
+    background: "#0c0c1e",
+    borderRadius: 12,
+  },
+  logo: { color: "#00ff9d" },
+  input: { width: "100%", padding: 12, marginTop: 10 },
+  btn: { width: "100%", padding: 12, marginTop: 10 },
+  msg: { marginTop: 15, color: "#00ff9d" }
+};
