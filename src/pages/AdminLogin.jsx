@@ -67,4 +67,66 @@ export default function AdminLogin() {
   );
 }
 
-/* styles same as your previous file */
+/* ✅ REQUIRED STYLES OBJECT */
+const styles = {
+  page: {
+    minHeight: "100vh",
+    background: "#05050f",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    fontFamily: "Segoe UI",
+  },
+
+  card: {
+    width: 420,
+    padding: 40,
+    background: "#0c0c1e",
+    borderRadius: 16,
+    border: "1px solid #1a1a3a",
+    boxShadow: "0 0 40px rgba(0,255,157,0.1)",
+    textAlign: "center",
+  },
+
+  logo: {
+    fontSize: 40,
+    fontWeight: "bold",
+    color: "#00ff9d",
+    marginBottom: 10,
+  },
+
+  subtitle: {
+    fontSize: 12,
+    color: "#55557a",
+    letterSpacing: "3px",
+    marginBottom: 25,
+  },
+
+  input: {
+    width: "100%",
+    padding: 14,
+    marginBottom: 14,
+    background: "#030308",
+    border: "1px solid #111128",
+    borderRadius: 8,
+    color: "#fff",
+    fontSize: 14,
+  },
+
+  btn: {
+    width: "100%",
+    padding: 14,
+    background: "rgba(0,255,157,0.1)",
+    border: "1px solid #00ff9d",
+    color: "#00ff9d",
+    fontWeight: "bold",
+    cursor: "pointer",
+    borderRadius: 8,
+  },
+
+  error: {
+    marginTop: 14,
+    color: "#ff4d6d",
+    fontSize: 13,
+  },
+};
