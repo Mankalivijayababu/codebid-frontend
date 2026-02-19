@@ -2,12 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { io } from "socket.io-client";
 
-/* 🔥 AUTO ENV SWITCH */
-const BASE_URL =
-  window.location.hostname === "localhost"
-    ? "http://localhost:5000"
-    : "https://codebid-1.onrender.com";
-
+/* 🔥 PRODUCTION ENV CONFIG */
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API = `${BASE_URL}/api`;
 const SOCKET_URL = BASE_URL;
 
@@ -49,13 +45,15 @@ export default function AdminDashboard() {
     if (token) fetchState();
   }, [token]);
 
-  /* SOCKET */
+  /* SOCKET ENGINE */
   useEffect(() => {
     if (!token) return;
 
     const socket = io(SOCKET_URL, {
       auth: { token },
       transports: ["websocket"],
+      reconnection: true,
+      reconnectionAttempts: 10,
     });
 
     socket.on("connect", () => {
@@ -65,10 +63,12 @@ export default function AdminDashboard() {
     socket.on("bid:received", (data) => {
       setBids((prev) => {
         const updated = [...prev, data];
+
         const highest = updated.reduce((max, bid) => {
           if (!max) return bid;
           return bid.amount > max.amount ? bid : max;
         }, null);
+
         setHighestBid(highest);
         return updated;
       });
@@ -111,6 +111,7 @@ export default function AdminDashboard() {
   }, [token]);
 
   /* ADMIN ACTIONS */
+
   const startRound = async () => {
     if (!title) return setMessage("Enter question title");
 
@@ -161,7 +162,6 @@ export default function AdminDashboard() {
   return (
     <div style={styles.page}>
       <div style={styles.wrapper}>
-
         {/* HEADER */}
         <div style={styles.header}>
           <div>
@@ -184,7 +184,6 @@ export default function AdminDashboard() {
         </div>
 
         <div style={styles.grid}>
-
           {/* ROUND INFO */}
           <div style={styles.card}>
             <div style={styles.cardTitle}>CURRENT ROUND</div>
@@ -286,114 +285,34 @@ export default function AdminDashboard() {
   );
 }
 
+/* STYLES */
 const styles = {
-  page: {
-    minHeight: "100vh",
-    background: "#05050f",
-    color: "#e6e6ff",
-    fontFamily: "Segoe UI, sans-serif",
-  },
+  page: { minHeight: "100vh", background: "#05050f", color: "#e6e6ff", fontFamily: "Segoe UI" },
   wrapper: { maxWidth: "1500px", margin: "auto", padding: "30px" },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: "30px",
-    alignItems: "center",
-  },
+  header: { display: "flex", justifyContent: "space-between", marginBottom: "30px", alignItems: "center" },
   logo: { fontSize: "28px", fontWeight: "bold", color: "#00ff9d" },
   sub: { fontSize: "12px", color: "#777" },
   headerRight: { display: "flex", gap: "20px", alignItems: "center" },
-  online: {
-    background: "rgba(0,255,157,0.1)",
-    padding: "10px 15px",
-    borderRadius: "8px",
-  },
-  timerBox: {
-    background: "#0c0c1e",
-    padding: "10px 20px",
-    borderRadius: "8px",
-    textAlign: "center",
-  },
+  online: { background: "rgba(0,255,157,0.1)", padding: "10px 15px", borderRadius: "8px" },
+  timerBox: { background: "#0c0c1e", padding: "10px 20px", borderRadius: "8px", textAlign: "center" },
   timerLabel: { fontSize: "10px", color: "#777" },
   timer: { fontSize: "30px", color: "#ff4d6d" },
   grid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" },
-  card: {
-    background: "#0c0c1e",
-    padding: "24px",
-    borderRadius: "14px",
-  },
+  card: { background: "#0c0c1e", padding: "24px", borderRadius: "14px" },
   cardTitle: { fontSize: "12px", color: "#00ff9d", marginBottom: "10px" },
-  badge: {
-    background: "#ffd60a",
-    padding: "5px 10px",
-    borderRadius: "6px",
-    color: "#000",
-    fontWeight: "bold",
-    display: "inline-block",
-    marginBottom: "8px",
-  },
+  badge: { background: "#ffd60a", padding: "5px 10px", borderRadius: "6px", color: "#000", fontWeight: "bold" },
   meta: { color: "#777", fontSize: "13px" },
   highestBox: { textAlign: "center", padding: "20px" },
   highestTeam: { fontSize: "18px" },
   highestAmount: { fontSize: "34px", color: "#ffd60a", fontWeight: "bold" },
   bidList: { maxHeight: "220px", overflowY: "auto" },
-  bidRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    padding: "8px",
-    borderBottom: "1px solid #1a1a3a",
-  },
-  input: {
-    width: "100%",
-    padding: "12px",
-    marginBottom: "10px",
-    background: "#030308",
-    color: "#fff",
-    border: "1px solid #1a1a3a",
-    borderRadius: "6px",
-  },
-  startBtn: {
-    width: "100%",
-    padding: "12px",
-    background: "#00ff9d",
-    border: "none",
-    borderRadius: "6px",
-    marginBottom: "10px",
-  },
-  endBtn: {
-    width: "100%",
-    padding: "12px",
-    background: "#ff4d6d",
-    border: "none",
-    borderRadius: "6px",
-    marginBottom: "10px",
-  },
+  bidRow: { display: "flex", justifyContent: "space-between", padding: "8px", borderBottom: "1px solid #1a1a3a" },
+  input: { width: "100%", padding: "12px", marginBottom: "10px", background: "#030308", color: "#fff", border: "1px solid #1a1a3a" },
+  startBtn: { width: "100%", padding: "12px", background: "#00ff9d", border: "none", marginBottom: "10px" },
+  endBtn: { width: "100%", padding: "12px", background: "#ff4d6d", border: "none", marginBottom: "10px" },
   judgeRow: { display: "flex", gap: "10px", marginBottom: "10px" },
-  correctBtn: {
-    flex: 1,
-    padding: "12px",
-    background: "#00ff9d",
-    border: "none",
-    borderRadius: "6px",
-  },
-  wrongBtn: {
-    flex: 1,
-    padding: "12px",
-    background: "#ff4d6d",
-    border: "none",
-    borderRadius: "6px",
-  },
-  resetBtn: {
-    width: "100%",
-    padding: "12px",
-    background: "#ffa500",
-    border: "none",
-    borderRadius: "6px",
-  },
-  message: {
-    marginTop: "20px",
-    textAlign: "center",
-    color: "#00ff9d",
-    fontWeight: "bold",
-  },
+  correctBtn: { flex: 1, padding: "12px", background: "#00ff9d", border: "none" },
+  wrongBtn: { flex: 1, padding: "12px", background: "#ff4d6d", border: "none" },
+  resetBtn: { width: "100%", padding: "12px", background: "#ffa500", border: "none" },
+  message: { marginTop: "20px", textAlign: "center", color: "#00ff9d", fontWeight: "bold" },
 };
