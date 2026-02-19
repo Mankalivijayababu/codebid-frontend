@@ -26,7 +26,7 @@ export default function AdminLogin() {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("adminInfo", JSON.stringify(res.data.admin));
 
-      window.location.href = "/admin/dashboard";
+      window.location.href = "./admin";
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     } finally {
