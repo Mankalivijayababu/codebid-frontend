@@ -55,14 +55,9 @@ export default function TeamDashboard() {
     const socket = io(SOCKET_URL, {
       auth: { token },
       transports: ["websocket"],
-      reconnection: true,
-      reconnectionAttempts: 10,
     });
 
-    socket.on("connect", () => {
-      console.log("🟢 Team connected");
-      fetchState();
-    });
+    socket.on("connect", () => fetchState());
 
     socket.on("round:started", (data) => {
       setRound(data);
@@ -86,11 +81,6 @@ export default function TeamDashboard() {
       setLeaderboard(data?.leaderboard || []);
       setMessage(`🏆 Winner: ${data?.winner || ""}`);
       fetchState();
-    });
-
-    socket.on("round:force-reset", () => {
-      setMessage("⚠ Round cancelled by admin");
-      setRound(null);
     });
 
     return () => socket.disconnect();
@@ -130,75 +120,159 @@ export default function TeamDashboard() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.card}>
 
-        <h1 style={styles.logo}>⚡ CODEBID</h1>
+      {/* TIMER BAR */}
+      {timeLeft > 0 && (
+        <div style={styles.timerBar}>
+          ⏳ {timeLeft}s remaining
+        </div>
+      )}
 
-        <h3>{team?.teamName || "Team"}</h3>
-        <h2>🪙 Coins: {team?.coins || 0}</h2>
+      <div style={styles.grid}>
 
-        {timeLeft > 0 && <h2>⏳ {timeLeft}s</h2>}
+        {/* TEAM INFO */}
+        <div style={styles.card}>
+          <h2 style={styles.title}>👥 Team</h2>
+          <h1>{team?.teamName || "Team"}</h1>
+          <p style={styles.coins}>🪙 Coins: {team?.coins || 0}</p>
+        </div>
 
-        {round ? (
-          <>
-            <h2>{round.title}</h2>
-            <p>{round.category}</p>
-            <p>Status: {round.status}</p>
-          </>
-        ) : (
-          <p>Waiting for admin...</p>
-        )}
+        {/* ROUND + BID */}
+        <div style={styles.card}>
+          <h2 style={styles.title}>🎯 Current Round</h2>
 
-        <hr />
+          {round ? (
+            <>
+              <h2>{round.title}</h2>
+              <p>{round.category}</p>
+              <p>Status: {round.status}</p>
+            </>
+          ) : (
+            <p>Waiting for admin...</p>
+          )}
 
-        {alreadyBid ? (
-          <p>🔒 Your bid is locked</p>
-        ) : (
-          <>
-            <input
-              value={bidAmount}
-              onChange={(e) => setBidAmount(e.target.value)}
-              placeholder="Enter bid"
-              style={styles.input}
-            />
-            <button onClick={placeBid} style={styles.btn}>
-              {placingBid ? "Placing..." : "LOCK BID"}
-            </button>
-          </>
-        )}
+          <hr />
 
-        <hr />
+          {alreadyBid ? (
+            <div style={styles.locked}>🔒 Bid Locked</div>
+          ) : (
+            <>
+              <input
+                value={bidAmount}
+                onChange={(e) => setBidAmount(e.target.value)}
+                placeholder="Enter bid amount"
+                style={styles.input}
+              />
 
-        <h3>Leaderboard</h3>
-        {leaderboard.map((t, i) => (
-          <div key={i}>
-            #{t.rank} {t.teamName} — 🪙 {t.coins}
-          </div>
-        ))}
+              <button
+                onClick={placeBid}
+                style={styles.bidBtn}
+              >
+                {placingBid ? "Placing..." : "LOCK BID"}
+              </button>
+            </>
+          )}
 
-        {message && <p style={styles.msg}>{message}</p>}
+          {message && <p style={styles.msg}>{message}</p>}
+        </div>
+
+        {/* LEADERBOARD */}
+        <div style={styles.card}>
+          <h2 style={styles.title}>🏆 Leaderboard</h2>
+
+          {leaderboard.map((t, i) => (
+            <div key={i} style={styles.leaderRow}>
+              #{t.rank} {t.teamName}
+              <span>🪙 {t.coins}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
+/* 🎨 PROFESSIONAL FEST UI */
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "#05050f",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
+    background: "linear-gradient(135deg,#05050f,#0d0d2b)",
+    color: "#fff",
+    padding: 40,
+    fontFamily: "Segoe UI",
+  },
+
+  timerBar: {
+    background: "#ff4d6d",
+    padding: 12,
+    textAlign: "center",
+    fontWeight: "bold",
+    marginBottom: 20,
+    borderRadius: 8,
+  },
+
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1.5fr 1fr",
+    gap: 25,
+  },
+
+  card: {
+    background: "rgba(255,255,255,0.04)",
+    backdropFilter: "blur(12px)",
+    padding: 25,
+    borderRadius: 16,
+    border: "1px solid rgba(255,255,255,0.08)",
+  },
+
+  title: {
+    color: "#00ff9d",
+    marginBottom: 10,
+  },
+
+  coins: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#ffd60a",
+  },
+
+  input: {
+    width: "100%",
+    padding: 14,
+    marginTop: 10,
+    borderRadius: 8,
+    border: "1px solid #1a1a3a",
+    background: "#030308",
     color: "#fff",
   },
-  card: {
-    width: 450,
-    padding: 30,
-    background: "#0c0c1e",
-    borderRadius: 12,
+
+  bidBtn: {
+    width: "100%",
+    padding: 14,
+    marginTop: 12,
+    background: "#00ff9d",
+    border: "none",
+    borderRadius: 8,
+    fontWeight: "bold",
+    cursor: "pointer",
   },
-  logo: { color: "#00ff9d" },
-  input: { width: "100%", padding: 12, marginTop: 10 },
-  btn: { width: "100%", padding: 12, marginTop: 10 },
-  msg: { marginTop: 15, color: "#00ff9d" }
+
+  locked: {
+    padding: 14,
+    background: "rgba(255,77,109,0.15)",
+    borderRadius: 8,
+    textAlign: "center",
+  },
+
+  leaderRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: 10,
+    borderBottom: "1px solid rgba(255,255,255,0.05)",
+  },
+
+  msg: {
+    marginTop: 15,
+    color: "#00ff9d",
+  },
 };
