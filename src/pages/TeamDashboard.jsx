@@ -181,11 +181,17 @@ export default function TeamDashboard() {
           <h2 style={styles.title}>🏆 Leaderboard</h2>
 
           {leaderboard.map((t, i) => (
-            <div key={i} style={styles.leaderRow}>
-              #{t.rank} {t.teamName}
-              <span>🪙 {t.coins}</span>
-            </div>
-          ))}
+  <div key={i} style={styles.leaderRow}>
+    #{t.rank} {t.teamName}
+    
+    {team && t.teamName === team.teamName && (
+      <span style={styles.youTag}> (You)</span>
+    )}
+
+    <span>🪙 {t.coins}</span>
+  </div>
+))}
+
         </div>
       </div>
     </div>
@@ -216,6 +222,12 @@ const styles = {
     gridTemplateColumns: "1fr 1.5fr 1fr",
     gap: 25,
   },
+  youTag: {
+  color: "#00ff9d",
+  fontWeight: "bold",
+  marginLeft: 6,
+},
+
 
   card: {
     background: "rgba(255,255,255,0.04)",

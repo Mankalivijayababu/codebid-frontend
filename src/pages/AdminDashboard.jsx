@@ -25,9 +25,9 @@ export default function AdminDashboard() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [bids, setBids] = useState([]);
 
-  const [timeLeft, setTimeLeft] = useState(0);
   const [highestBid, setHighestBid] = useState(null);
   const [teamsOnline, setTeamsOnline] = useState(0);
+  const [winnerTeam, setWinnerTeam] = useState(null);
 
   /* ================= FETCH GAME STATE ================= */
   const fetchState = async () => {
@@ -59,8 +59,8 @@ export default function AdminDashboard() {
     socket.on("bid:received", (data) => {
       setBids((prev) => {
         const updated = [...prev, data];
-        const highest = updated.reduce((max, bid) =>
-          !max || bid.amount > max.amount ? bid : max,
+        const highest = updated.reduce(
+          (max, bid) => (!max || bid.amount > max.amount ? bid : max),
           null
         );
         setHighestBid(highest);
@@ -72,7 +72,7 @@ export default function AdminDashboard() {
       setRound(data);
       setBids([]);
       setHighestBid(null);
-      setTimeLeft(30);
+      setWinnerTeam(null);
       setMessage("🚀 Round Started");
     });
 
@@ -81,6 +81,7 @@ export default function AdminDashboard() {
     });
 
     socket.on("round:completed", (data) => {
+      setWinnerTeam(data?.winner);
       setMessage(`🏆 Winner: ${data?.winner}`);
       fetchState();
     });
@@ -238,6 +239,29 @@ export default function AdminDashboard() {
               🔄 RESET ROUND
             </button>
           </div>
+
+          {/* 🔥 LIVE LEADERBOARD WITH WINNER HIGHLIGHT */}
+          <div style={styles.card}>
+            <div style={styles.cardTitle}>🏆 LIVE LEADERBOARD</div>
+
+            {leaderboard.length === 0 ? (
+              <div>No teams yet</div>
+            ) : (
+              leaderboard.map((team, i) => (
+                <div
+                  key={i}
+                  style={
+                    team.teamName === winnerTeam
+                      ? styles.winnerRow
+                      : styles.leaderRow
+                  }
+                >
+                  #{team.rank} {team.teamName}
+                  <span>🪙 {team.coins}</span>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         {message && <div style={styles.message}>{message}</div>}
@@ -262,10 +286,11 @@ const styles = {
   sub: { fontSize: 12, color: "#888" },
   online: { background: "#0c0c1e", padding: 10, borderRadius: 8 },
 
-  grid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20 },
+  grid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 20 },
 
   card: { background: "#0c0c1e", padding: 20, borderRadius: 12 },
   cardTitle: { fontSize: 14, marginBottom: 10, color: "#00ff9d" },
+
   badge: {
     background: "#ffd60a",
     padding: "4px 8px",
@@ -288,6 +313,22 @@ const styles = {
   correctBtn: { width: "100%", padding: 10, marginTop: 6, background: "#00c853", border: "none", color:"#fff" },
   wrongBtn: { width: "100%", padding: 10, marginTop: 6, background: "#d50000", border: "none", color:"#fff" },
   resetBtn: { width: "100%", padding: 10, marginTop: 6, background: "#2962ff", border: "none", color:"#fff" },
+
+  leaderRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: 10,
+    borderBottom: "1px solid rgba(255,255,255,0.05)",
+  },
+
+  winnerRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: 10,
+    background: "rgba(0,255,157,0.2)",
+    borderRadius: 8,
+    fontWeight: "bold",
+  },
 
   message: { marginTop: 20, textAlign: "center", color: "#00ff9d" },
 };
