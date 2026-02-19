@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 /* 🔥 PRODUCTION SAFE ENV */
 const BASE_URL =
@@ -8,6 +9,8 @@ const BASE_URL =
 const API = `${BASE_URL}/api`;
 
 export default function AdminLogin() {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("host@codebid.com");
   const [password, setPassword] = useState("host123");
   const [loading, setLoading] = useState(false);
@@ -18,22 +21,33 @@ export default function AdminLogin() {
       setLoading(true);
       setError("");
 
+      console.log("🔵 Sending login request...");
+
       const res = await axios.post(`${API}/admin/login`, {
         email,
         password,
       });
 
-      // ✅ STORE TOKEN
+      console.log("🟢 Login success:", res.data);
+
+      if (!res.data?.token) {
+        throw new Error("Token not received");
+      }
+
+      // ✅ Save token
       localStorage.setItem("token", res.data.token);
 
-      // optional admin info
-      localStorage.setItem("adminInfo", JSON.stringify(res.data.admin));
-
-      // 🔥 FIX: REDIRECT TO ADMIN DASHBOARD
-      window.location.href = "/admin";
+      // ✅ Navigate properly (no reload)
+      navigate("/admin");
 
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      console.error("🔴 Login error:", err);
+
+      setError(
+        err.response?.data?.message ||
+        err.message ||
+        "Login failed"
+      );
     } finally {
       setLoading(false);
     }
