@@ -126,7 +126,6 @@ export default function AdminDashboard() {
         { result: "correct" },
         { headers: authHeaders }
       );
-      setMessage("✅ Answer Marked Correct");
       fetchState();
     } catch {
       setMessage("Correct failed");
@@ -140,7 +139,6 @@ export default function AdminDashboard() {
         { result: "wrong" },
         { headers: authHeaders }
       );
-      setMessage("❌ Answer Marked Wrong");
       fetchState();
     } catch {
       setMessage("Wrong failed");
@@ -150,7 +148,6 @@ export default function AdminDashboard() {
   const resetRound = async () => {
     try {
       await axios.patch(`${API}/game/force-reset`, {}, { headers: authHeaders });
-      setMessage("🔄 Round Reset");
       fetchState();
     } catch {
       setMessage("Reset failed");
@@ -162,6 +159,8 @@ export default function AdminDashboard() {
   return (
     <div style={styles.page}>
       <div style={styles.wrapper}>
+        
+        {/* HEADER */}
         <div style={styles.header}>
           <div>
             <div style={styles.logo}>⚡ CODEBID CONTROL</div>
@@ -170,13 +169,15 @@ export default function AdminDashboard() {
           <div style={styles.online}>🟢 {teamsOnline} Teams Online</div>
         </div>
 
-        <div style={styles.grid}>
+        {/* TOP SECTION */}
+        <div style={styles.topGrid}>
+          
           {/* CURRENT ROUND */}
           <div style={styles.card}>
             <div style={styles.cardTitle}>CURRENT ROUND</div>
             {round ? (
               <>
-                <h2>{round.title}</h2>
+                <h2 style={styles.roundTitle}>{round.title}</h2>
                 <div style={styles.badge}>{round.category}</div>
                 <div>Status: {round.status}</div>
               </>
@@ -186,12 +187,12 @@ export default function AdminDashboard() {
           </div>
 
           {/* HIGHEST BID */}
-          <div style={styles.card}>
+          <div style={styles.cardCenter}>
             <div style={styles.cardTitle}>HIGHEST BID</div>
             {highestBid ? (
               <>
-                <h2>{highestBid.teamName}</h2>
-                <h1>🪙 {highestBid.amount}</h1>
+                <h2 style={styles.bidTeam}>{highestBid.teamName}</h2>
+                <h1 style={styles.bidAmount}>🪙 {highestBid.amount}</h1>
               </>
             ) : (
               <div>No bids yet</div>
@@ -219,49 +220,53 @@ export default function AdminDashboard() {
               <option>Hard</option>
             </select>
 
-            <button style={styles.startBtn} onClick={startRound}>
-              🚀 START ROUND
-            </button>
+            <div style={styles.btnGroup}>
+              <button style={styles.startBtn} onClick={startRound}>
+                START
+              </button>
 
-            <button style={styles.endBtn} onClick={endBidding}>
-              ⛔ END BIDDING
-            </button>
+              <button style={styles.endBtn} onClick={endBidding}>
+                END
+              </button>
+            </div>
 
-            <button style={styles.correctBtn} onClick={markCorrect}>
-              ✅ MARK CORRECT
-            </button>
+            <div style={styles.btnGroup}>
+              <button style={styles.correctBtn} onClick={markCorrect}>
+                CORRECT
+              </button>
 
-            <button style={styles.wrongBtn} onClick={markWrong}>
-              ❌ MARK WRONG
-            </button>
+              <button style={styles.wrongBtn} onClick={markWrong}>
+                WRONG
+              </button>
+            </div>
 
             <button style={styles.resetBtn} onClick={resetRound}>
-              🔄 RESET ROUND
+              RESET ROUND
             </button>
           </div>
+        </div>
 
-          {/* 🔥 LIVE LEADERBOARD WITH WINNER HIGHLIGHT */}
-          <div style={styles.card}>
-            <div style={styles.cardTitle}>🏆 LIVE LEADERBOARD</div>
+        {/* LEADERBOARD */}
+        <div style={styles.leaderboardCard}>
+          <div style={styles.cardTitle}>LIVE LEADERBOARD</div>
 
-            {leaderboard.length === 0 ? (
-              <div>No teams yet</div>
-            ) : (
-              leaderboard.map((team, i) => (
-                <div
-                  key={i}
-                  style={
-                    team.teamName === winnerTeam
-                      ? styles.winnerRow
-                      : styles.leaderRow
-                  }
-                >
-                  #{team.rank} {team.teamName}
-                  <span>🪙 {team.coins}</span>
-                </div>
-              ))
-            )}
-          </div>
+          {leaderboard.length === 0 ? (
+            <div>No teams yet</div>
+          ) : (
+            leaderboard.map((team, i) => (
+              <div
+                key={i}
+                style={
+                  team.teamName === winnerTeam
+                    ? styles.winnerRow
+                    : styles.leaderRow
+                }
+              >
+                <span>#{team.rank} {team.teamName}</span>
+                <span>🪙 {team.coins}</span>
+              </div>
+            ))
+          )}
         </div>
 
         {message && <div style={styles.message}>{message}</div>}
@@ -270,26 +275,57 @@ export default function AdminDashboard() {
   );
 }
 
-/* ================= STYLES ================= */
+/* ================= CLEAN STYLES ================= */
 
 const styles = {
   page: {
     minHeight: "100vh",
     background: "#05050f",
     color: "#fff",
-    padding: 40,
+    padding: 30,
     fontFamily: "Segoe UI",
   },
-  wrapper: { maxWidth: 1200, margin: "auto" },
-  header: { display: "flex", justifyContent: "space-between", marginBottom: 30 },
+
+  wrapper: { maxWidth: 1300, margin: "auto" },
+
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginBottom: 25,
+    alignItems: "center",
+  },
+
   logo: { fontSize: 24, fontWeight: "bold", color: "#00ff9d" },
   sub: { fontSize: 12, color: "#888" },
   online: { background: "#0c0c1e", padding: 10, borderRadius: 8 },
 
-  grid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 20 },
+  topGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1.2fr 1fr",
+    gap: 20,
+    marginBottom: 25,
+  },
 
-  card: { background: "#0c0c1e", padding: 20, borderRadius: 12 },
-  cardTitle: { fontSize: 14, marginBottom: 10, color: "#00ff9d" },
+  card: {
+    background: "#0c0c1e",
+    padding: 20,
+    borderRadius: 12,
+  },
+
+  cardCenter: {
+    background: "#0c0c1e",
+    padding: 20,
+    borderRadius: 12,
+    textAlign: "center",
+  },
+
+  cardTitle: {
+    fontSize: 14,
+    marginBottom: 10,
+    color: "#00ff9d",
+  },
+
+  roundTitle: { marginBottom: 6 },
 
   badge: {
     background: "#ffd60a",
@@ -297,7 +333,12 @@ const styles = {
     borderRadius: 6,
     color: "#000",
     fontWeight: "bold",
+    display: "inline-block",
+    marginBottom: 8,
   },
+
+  bidTeam: { marginBottom: 8 },
+  bidAmount: { fontSize: 42, margin: 0 },
 
   input: {
     width: "100%",
@@ -306,29 +347,46 @@ const styles = {
     background: "#030308",
     border: "1px solid #1a1a3a",
     color: "#fff",
+    borderRadius: 6,
   },
 
-  startBtn: { width: "100%", padding: 10, background: "#00ff9d", border: "none" },
-  endBtn: { width: "100%", padding: 10, marginTop: 6, background: "#ff4d6d", border: "none", color:"#fff" },
-  correctBtn: { width: "100%", padding: 10, marginTop: 6, background: "#00c853", border: "none", color:"#fff" },
-  wrongBtn: { width: "100%", padding: 10, marginTop: 6, background: "#d50000", border: "none", color:"#fff" },
-  resetBtn: { width: "100%", padding: 10, marginTop: 6, background: "#2962ff", border: "none", color:"#fff" },
+  btnGroup: {
+    display: "flex",
+    gap: 10,
+    marginBottom: 10,
+  },
+
+  startBtn: { flex: 1, padding: 10, background: "#00ff9d", border: "none" },
+  endBtn: { flex: 1, padding: 10, background: "#ff4d6d", border: "none", color:"#fff" },
+  correctBtn: { flex: 1, padding: 10, background: "#00c853", border: "none", color:"#fff" },
+  wrongBtn: { flex: 1, padding: 10, background: "#d50000", border: "none", color:"#fff" },
+  resetBtn: { width: "100%", padding: 10, background: "#2962ff", border: "none", color:"#fff" },
+
+  leaderboardCard: {
+    background: "#0c0c1e",
+    padding: 20,
+    borderRadius: 12,
+  },
 
   leaderRow: {
     display: "flex",
     justifyContent: "space-between",
-    padding: 10,
+    padding: 12,
     borderBottom: "1px solid rgba(255,255,255,0.05)",
   },
 
   winnerRow: {
     display: "flex",
     justifyContent: "space-between",
-    padding: 10,
-    background: "rgba(0,255,157,0.2)",
-    borderRadius: 8,
+    padding: 12,
+    background: "rgba(0,255,157,0.15)",
+    borderRadius: 6,
     fontWeight: "bold",
   },
 
-  message: { marginTop: 20, textAlign: "center", color: "#00ff9d" },
+  message: {
+    marginTop: 20,
+    textAlign: "center",
+    color: "#00ff9d",
+  },
 };

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { io } from "socket.io-client";
 
-/* 🔥 PRODUCTION SAFE ENV CONFIG */
 const BASE_URL =
   import.meta.env.VITE_API_URL || "https://codebid-1.onrender.com";
 
@@ -78,7 +77,6 @@ export default function TeamDashboard() {
     });
 
     socket.on("round:completed", (data) => {
-      setLeaderboard(data?.leaderboard || []);
       setMessage(`🏆 Winner: ${data?.winner || ""}`);
       fetchState();
     });
@@ -94,7 +92,6 @@ export default function TeamDashboard() {
     }
 
     if (alreadyBid || placingBid) return;
-
     if (round?.status !== "bidding") {
       setMessage("❌ Bidding not active");
       return;
@@ -121,76 +118,77 @@ export default function TeamDashboard() {
   return (
     <div style={styles.page}>
 
-      {/* TIMER BAR */}
       {timeLeft > 0 && (
         <div style={styles.timerBar}>
           ⏳ {timeLeft}s remaining
         </div>
       )}
 
-      <div style={styles.grid}>
+      <div style={styles.wrapper}>
+        <div style={styles.grid}>
 
-        {/* TEAM INFO */}
-        <div style={styles.card}>
-          <h2 style={styles.title}>👥 Team</h2>
-          <h1>{team?.teamName || "Team"}</h1>
-          <p style={styles.coins}>🪙 Coins: {team?.coins || 0}</p>
-        </div>
+          {/* TEAM INFO */}
+          <div style={styles.card}>
+            <h2 style={styles.title}>Team</h2>
+            <h1 style={styles.teamName}>{team?.teamName || "Team"}</h1>
+            <p style={styles.coins}>🪙 {team?.coins || 0} Coins</p>
+          </div>
 
-        {/* ROUND + BID */}
-        <div style={styles.card}>
-          <h2 style={styles.title}>🎯 Current Round</h2>
+          {/* ROUND SECTION */}
+          <div style={styles.cardCenter}>
+            <h2 style={styles.title}>Current Round</h2>
 
-          {round ? (
-            <>
-              <h2>{round.title}</h2>
-              <p>{round.category}</p>
-              <p>Status: {round.status}</p>
-            </>
-          ) : (
-            <p>Waiting for admin...</p>
-          )}
+            {round ? (
+              <>
+                <h2>{round.title}</h2>
+                <p>{round.category}</p>
+                <p>Status: {round.status}</p>
+              </>
+            ) : (
+              <p>Waiting for admin...</p>
+            )}
 
-          <hr />
+            <div style={{ marginTop: 20 }}>
+              {alreadyBid ? (
+                <div style={styles.locked}>🔒 Bid Locked</div>
+              ) : (
+                <>
+                  <input
+                    value={bidAmount}
+                    onChange={(e) => setBidAmount(e.target.value)}
+                    placeholder="Enter bid amount"
+                    style={styles.input}
+                  />
 
-          {alreadyBid ? (
-            <div style={styles.locked}>🔒 Bid Locked</div>
-          ) : (
-            <>
-              <input
-                value={bidAmount}
-                onChange={(e) => setBidAmount(e.target.value)}
-                placeholder="Enter bid amount"
-                style={styles.input}
-              />
+                  <button
+                    onClick={placeBid}
+                    style={styles.bidBtn}
+                  >
+                    {placingBid ? "Placing..." : "LOCK BID"}
+                  </button>
+                </>
+              )}
+            </div>
 
-              <button
-                onClick={placeBid}
-                style={styles.bidBtn}
-              >
-                {placingBid ? "Placing..." : "LOCK BID"}
-              </button>
-            </>
-          )}
+            {message && <p style={styles.msg}>{message}</p>}
+          </div>
 
-          {message && <p style={styles.msg}>{message}</p>}
-        </div>
+          {/* LEADERBOARD */}
+          <div style={styles.card}>
+            <h2 style={styles.title}>Leaderboard</h2>
 
-        {/* LEADERBOARD */}
-        <div style={styles.card}>
-          <h2 style={styles.title}>🏆 Leaderboard</h2>
-
-          {leaderboard.map((t, i) => (
-  <div key={i} style={styles.leaderRow}>
-    #{t.rank} {t.teamName}
-    
-    {team && t.teamName === team.teamName && (
-      <span style={styles.youTag}> (You)</span>
-    )}
-
-    <span>🪙 {t.coins}</span>
-  </div>
-))}
+            {leaderboard.map((t, i) => (
+              <div key={i} style={styles.leaderRow}>
+                <div style={styles.leftRow}>
+                  #{t.rank} {t.teamName}
+                  {team && t.teamName === team.teamName && (
+                    <span style={styles.youTag}> (You)</span>
+                  )}
+                </div>
+                <div>🪙 {t.coins}</div>
+              </div>
+            ))}
+          </div>
 
         </div>
       </div>
@@ -198,14 +196,20 @@ export default function TeamDashboard() {
   );
 }
 
-/* 🎨 PROFESSIONAL FEST UI */
+/* ===== REFINED STYLES ===== */
+
 const styles = {
   page: {
     minHeight: "100vh",
     background: "linear-gradient(135deg,#05050f,#0d0d2b)",
     color: "#fff",
-    padding: 40,
+    padding: 30,
     fontFamily: "Segoe UI",
+  },
+
+  wrapper: {
+    maxWidth: 1200,
+    margin: "auto",
   },
 
   timerBar: {
@@ -213,7 +217,7 @@ const styles = {
     padding: 12,
     textAlign: "center",
     fontWeight: "bold",
-    marginBottom: 20,
+    marginBottom: 25,
     borderRadius: 8,
   },
 
@@ -222,23 +226,26 @@ const styles = {
     gridTemplateColumns: "1fr 1.5fr 1fr",
     gap: 25,
   },
-  youTag: {
-  color: "#00ff9d",
-  fontWeight: "bold",
-  marginLeft: 6,
-},
-
 
   card: {
-    background: "rgba(255,255,255,0.04)",
-    backdropFilter: "blur(12px)",
+    background: "rgba(255,255,255,0.05)",
+    padding: 20,
+    borderRadius: 14,
+  },
+
+  cardCenter: {
+    background: "rgba(255,255,255,0.05)",
     padding: 25,
-    borderRadius: 16,
-    border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: 14,
+    textAlign: "center",
   },
 
   title: {
     color: "#00ff9d",
+    marginBottom: 15,
+  },
+
+  teamName: {
     marginBottom: 10,
   },
 
@@ -250,18 +257,17 @@ const styles = {
 
   input: {
     width: "100%",
-    padding: 14,
-    marginTop: 10,
+    padding: 12,
     borderRadius: 8,
     border: "1px solid #1a1a3a",
     background: "#030308",
     color: "#fff",
+    marginBottom: 10,
   },
 
   bidBtn: {
     width: "100%",
-    padding: 14,
-    marginTop: 12,
+    padding: 12,
     background: "#00ff9d",
     border: "none",
     borderRadius: 8,
@@ -270,17 +276,27 @@ const styles = {
   },
 
   locked: {
-    padding: 14,
+    padding: 12,
     background: "rgba(255,77,109,0.15)",
     borderRadius: 8,
-    textAlign: "center",
   },
 
   leaderRow: {
     display: "flex",
     justifyContent: "space-between",
-    padding: 10,
-    borderBottom: "1px solid rgba(255,255,255,0.05)",
+    padding: 12,
+    borderBottom: "1px solid rgba(255,255,255,0.06)",
+  },
+
+  leftRow: {
+    display: "flex",
+    alignItems: "center",
+  },
+
+  youTag: {
+    color: "#00ff9d",
+    fontWeight: "bold",
+    marginLeft: 6,
   },
 
   msg: {
