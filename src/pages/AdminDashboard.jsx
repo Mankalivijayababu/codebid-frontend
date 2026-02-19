@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { io } from "socket.io-client";
 
-/* 🔥 PRODUCTION ENV CONFIG */
-const BASE_URL =  import.meta.env.VITE_API_URL ;
+/* 🔥 SAFE ENV CONFIG */
+const BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const API = `${BASE_URL}/api`;
 const SOCKET_URL = BASE_URL;
 
@@ -34,8 +36,8 @@ export default function AdminDashboard() {
         headers: authHeaders,
       });
 
-      setRound(res.data.round);
-      setLeaderboard(res.data.leaderboard);
+      setRound(res.data?.round || null);
+      setLeaderboard(res.data?.leaderboard || []);
     } catch (err) {
       console.log("State fetch error:", err?.response?.data || err.message);
     }
@@ -61,7 +63,7 @@ export default function AdminDashboard() {
     });
 
     socket.on("bid:received", (data) => {
-      setBids((prev) => {
+      setBids((prev = []) => {
         const updated = [...prev, data];
 
         const highest = updated.reduce((max, bid) => {
@@ -78,12 +80,12 @@ export default function AdminDashboard() {
       setRound(data);
       setBids([]);
       setHighestBid(null);
-      setTimeLeft(data.duration || 30);
+      setTimeLeft(data?.duration || 30);
       setMessage("🚀 Round Started");
     });
 
     socket.on("timer:update", (data) => {
-      setTimeLeft(data.timeLeft);
+      setTimeLeft(data?.timeLeft || 0);
     });
 
     socket.on("bidding:ended", (data) => {
@@ -93,8 +95,8 @@ export default function AdminDashboard() {
     });
 
     socket.on("round:completed", (data) => {
-      setLeaderboard(data.leaderboard);
-      setMessage(`🏆 Winner: ${data.winner}`);
+      setLeaderboard(data?.leaderboard || []);
+      setMessage(`🏆 Winner: ${data?.winner || ""}`);
       fetchState();
     });
 
@@ -104,7 +106,7 @@ export default function AdminDashboard() {
     });
 
     socket.on("teams:online", (data) => {
-      setTeamsOnline(data.count);
+      setTeamsOnline(data?.count || 0);
     });
 
     return () => socket.disconnect();
@@ -220,12 +222,13 @@ export default function AdminDashboard() {
           <div style={styles.card}>
             <div style={styles.cardTitle}>LIVE BIDS</div>
             <div style={styles.bidList}>
-              {bids.map((bid, i) => (
-                <div key={i} style={styles.bidRow}>
-                  <span>{bid.teamName}</span>
-                  <span>🪙 {bid.amount}</span>
-                </div>
-              ))}
+              {Array.isArray(bids) &&
+                bids.map((bid, i) => (
+                  <div key={i} style={styles.bidRow}>
+                    <span>{bid.teamName}</span>
+                    <span>🪙 {bid.amount}</span>
+                  </div>
+                ))}
             </div>
           </div>
 
@@ -284,6 +287,8 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+/* STYLES unchanged */
 
 /* STYLES */
 const styles = {

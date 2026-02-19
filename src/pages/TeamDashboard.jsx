@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 
 /* 🔥 PRODUCTION SAFE ENV CONFIG */
 const BASE_URL =
-  import.meta.env.VITE_API_URL ;
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const API = `${BASE_URL}/api`;
 const SOCKET_URL = BASE_URL;
@@ -13,10 +13,9 @@ export default function TeamDashboard() {
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
 
-  const [socket, setSocket] = useState(null);
   const [team, setTeam] = useState(null);
   const [round, setRound] = useState(null);
-  const [leaderboard, setLeaderboard] = [];
+  const [leaderboard, setLeaderboard] = useState([]);
 
   const [bidAmount, setBidAmount] = useState("");
   const [timeLeft, setTimeLeft] = useState(0);
@@ -24,24 +23,24 @@ export default function TeamDashboard() {
   const [alreadyBid, setAlreadyBid] = useState(false);
   const [placingBid, setPlacingBid] = useState(false);
 
-  /* FETCH STATE */
+  /* FETCH GAME STATE */
   const fetchState = async () => {
     try {
       const res = await axios.get(`${API}/game/state`, { headers });
 
-      setRound(res.data.round);
-      setLeaderboard(res.data.leaderboard);
-      setTeam(res.data.team);
+      setRound(res.data?.round || null);
+      setLeaderboard(res.data?.leaderboard || []);
+      setTeam(res.data?.team || null);
 
       if (
-        res.data.round?.bids?.some(
-          (b) => b.teamName === res.data.team?.teamName
+        res.data?.round?.bids?.some(
+          (b) => b.teamName === res.data?.team?.teamName
         )
       ) {
         setAlreadyBid(true);
       }
     } catch (err) {
-      console.log("State fetch failed");
+      console.log("State fetch failed:", err?.message);
     }
   };
 
@@ -53,50 +52,48 @@ export default function TeamDashboard() {
   useEffect(() => {
     if (!token) return;
 
-    const newSocket = io(SOCKET_URL, {
+    const socket = io(SOCKET_URL, {
       auth: { token },
       transports: ["websocket"],
       reconnection: true,
       reconnectionAttempts: 10,
     });
 
-    setSocket(newSocket);
-
-    newSocket.on("connect", () => {
+    socket.on("connect", () => {
       console.log("🟢 Team connected");
       fetchState();
     });
 
-    newSocket.on("round:started", (data) => {
+    socket.on("round:started", (data) => {
       setRound(data);
       setAlreadyBid(false);
       setBidAmount("");
-      setTimeLeft(data.duration || 30);
+      setTimeLeft(data?.duration || 30);
       setMessage("🚀 New bidding round started!");
     });
 
-    newSocket.on("timer:update", (data) => {
-      setTimeLeft(data.timeLeft);
+    socket.on("timer:update", (data) => {
+      setTimeLeft(data?.timeLeft || 0);
     });
 
-    newSocket.on("bidding:ended", () => {
+    socket.on("bidding:ended", () => {
       setTimeLeft(0);
       setMessage("⏹️ Bidding closed. Waiting for result...");
       fetchState();
     });
 
-    newSocket.on("round:completed", (data) => {
-      setLeaderboard(data.leaderboard);
-      setMessage(`🏆 Winner: ${data.winner}`);
+    socket.on("round:completed", (data) => {
+      setLeaderboard(data?.leaderboard || []);
+      setMessage(`🏆 Winner: ${data?.winner || ""}`);
       fetchState();
     });
 
-    newSocket.on("round:force-reset", () => {
+    socket.on("round:force-reset", () => {
       setMessage("⚠ Round cancelled by admin");
       setRound(null);
     });
 
-    return () => newSocket.disconnect();
+    return () => socket.disconnect();
   }, [token]);
 
   /* PLACE BID */
@@ -130,7 +127,7 @@ export default function TeamDashboard() {
     <div style={{ padding: 40, background: "#05050f", minHeight: "100vh", color: "#fff" }}>
       <h1>⚡ CODEBID</h1>
 
-      <h3>{team?.teamName}</h3>
+      <h3>{team?.teamName || "Team"}</h3>
       <h2>🪙 Coins: {team?.coins || 0}</h2>
 
       {timeLeft > 0 && <h2>⏳ {timeLeft}s</h2>}
@@ -156,18 +153,21 @@ export default function TeamDashboard() {
             onChange={(e) => setBidAmount(e.target.value)}
             placeholder="Enter bid"
           />
-          <button onClick={placeBid}>LOCK BID</button>
+          <button onClick={placeBid} disabled={placingBid}>
+            {placingBid ? "Placing..." : "LOCK BID"}
+          </button>
         </>
       )}
 
       <hr />
 
       <h3>Leaderboard</h3>
-      {leaderboard.map((t, i) => (
-        <div key={i}>
-          #{t.rank} {t.teamName} — 🪙 {t.coins}
-        </div>
-      ))}
+      {Array.isArray(leaderboard) &&
+        leaderboard.map((t, i) => (
+          <div key={i}>
+            #{t.rank} {t.teamName} — 🪙 {t.coins}
+          </div>
+        ))}
 
       {message && <p>{message}</p>}
     </div>

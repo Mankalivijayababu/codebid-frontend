@@ -2,14 +2,14 @@ import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 
-/* 🔥 PRODUCTION API CONFIG */
+/* 🔥 PRODUCTION SAFE API CONFIG */
 const BASE_URL =
-  import.meta.env.VITE_API_URL ;
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const API = `${BASE_URL}/api`;
 
 export default function LoginPage() {
-  const [mode, setMode] = useState("team"); // team | signup | admin
+  const [mode, setMode] = useState("team");
   const [form, setForm] = useState({
     teamName: "",
     repName: "",
@@ -82,8 +82,6 @@ export default function LoginPage() {
       alert("Google admin login failed");
     }
   };
-
-  /* ───────────────── UI ───────────────── */
 
   return (
     <div style={styles.container}>
@@ -225,25 +223,20 @@ const styles = {
     color: "#fff",
     fontFamily: "Rajdhani",
   },
-
   card: {
     width: 420,
     padding: 35,
     background: "#0c0c1e",
     borderRadius: 14,
     border: "1px solid #1a1a3a",
-    boxShadow: "0 0 40px rgba(0,255,157,0.08)",
   },
-
   logo: {
     textAlign: "center",
     fontSize: 42,
     fontWeight: "900",
     fontFamily: "Orbitron",
     color: "#00ff9d",
-    marginBottom: 4,
   },
-
   subtitle: {
     textAlign: "center",
     color: "#55557a",
@@ -251,13 +244,7 @@ const styles = {
     letterSpacing: "3px",
     marginBottom: 28,
   },
-
-  tabs: {
-    display: "flex",
-    marginBottom: 18,
-    gap: 6,
-  },
-
+  tabs: { display: "flex", marginBottom: 18, gap: 6 },
   tab: {
     flex: 1,
     padding: 10,
@@ -267,18 +254,15 @@ const styles = {
     cursor: "pointer",
     borderRadius: 8,
   },
-
   activeTab: {
     flex: 1,
     padding: 10,
     background: "rgba(0,255,157,0.1)",
     border: "1px solid #00ff9d",
     color: "#00ff9d",
-    cursor: "pointer",
     borderRadius: 8,
     fontWeight: "bold",
   },
-
   input: {
     width: "100%",
     padding: 14,
@@ -288,7 +272,6 @@ const styles = {
     borderRadius: 8,
     color: "#fff",
   },
-
   primaryBtn: {
     width: "100%",
     padding: 14,
@@ -297,10 +280,8 @@ const styles = {
     border: "1px solid #00ff9d",
     color: "#00ff9d",
     fontWeight: "bold",
-    cursor: "pointer",
     borderRadius: 8,
   },
-
   secondaryBtn: {
     width: "100%",
     padding: 14,
@@ -309,10 +290,8 @@ const styles = {
     border: "1px solid #ffd60a",
     color: "#ffd60a",
     fontWeight: "bold",
-    cursor: "pointer",
     borderRadius: 8,
   },
-
   adminBtn: {
     width: "100%",
     padding: 14,
@@ -321,13 +300,7 @@ const styles = {
     border: "1px solid #ff4d6d",
     color: "#ff4d6d",
     fontWeight: "bold",
-    cursor: "pointer",
     borderRadius: 8,
   },
-
-  error: {
-    color: "#ff4d6d",
-    marginBottom: 10,
-    textAlign: "center",
-  },
+  error: { color: "#ff4d6d", marginBottom: 10, textAlign: "center" },
 };
