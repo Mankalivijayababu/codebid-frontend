@@ -1,0 +1,83 @@
+/* Reset layout */
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+/* Global app container */
+.app-container {
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Common card style used across pages */
+.glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  box-shadow: 0 0 40px rgba(0, 255, 170, 0.15);
+}
+
+/* Buttons theme */
+.primary-btn {
+  background: #00ffa3;
+  color: #020617;
+  padding: 14px;
+  border-radius: 10px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(0,255,170,0.4);
+}
+
+.secondary-btn {
+  background: #1f2937;
+  color: white;
+  padding: 14px;
+  border-radius: 10px;
+}
+
+.danger-btn {
+  background: #dc2626;
+  color: white;
+  padding: 14px;
+  border-radius: 10px;
+}
+
+.success-btn {
+  background: #16a34a;
+  color: white;
+  padding: 14px;
+  border-radius: 10px;
+}
+
+/* Inputs theme */
+.input-field {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
+  color: white;
+  margin-bottom: 12px;
+}
+
+/* Leaderboard rows */
+.team-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Status badge */
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  background: rgba(0,255,170,0.15);
+  color: #00ffa3;
+  display: inline-block;
+}
