@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import jwt_decode from "jwt-decode";
 
 import LoginPage from "./pages/LoginPage";
 import AdminLogin from "./pages/AdminLogin";
@@ -7,29 +8,27 @@ import AdminDashboard from "./pages/AdminDashboard";
 import TeamDashboard from "./pages/TeamDashboard";
 
 /**
- * 🔐 Admin Route Protection
+ * 🔐 Generic Role Protection
  */
-function AdminProtected({ children }) {
-  const token = localStorage.getItem("token"); // ✅ FIXED
-
-  if (!token) {
-    return <Navigate to="/admin-login" replace />;
-  }
-
-  return children;
-}
-
-/**
- * 👥 Team Route Protection
- */
-function TeamProtected({ children }) {
+function ProtectedRoute({ children, role }) {
   const token = localStorage.getItem("token");
 
   if (!token) {
     return <Navigate to="/" replace />;
   }
 
-  return children;
+  try {
+    const decoded = jwt_decode(token);
+
+    // 🔥 Role validation
+    if (decoded.role !== role) {
+      return <Navigate to="/" replace />;
+    }
+
+    return children;
+  } catch (err) {
+    return <Navigate to="/" replace />;
+  }
 }
 
 export default function App() {
@@ -38,19 +37,19 @@ export default function App() {
       <BrowserRouter>
         <Routes>
 
-          {/* MAIN LOGIN */}
+          {/* MAIN LOGIN (TEAM + ADMIN TAB VERSION) */}
           <Route path="/" element={<LoginPage />} />
 
-          {/* ADMIN LOGIN */}
+          {/* SEPARATE ADMIN LOGIN PAGE */}
           <Route path="/admin-login" element={<AdminLogin />} />
 
           {/* ADMIN DASHBOARD */}
           <Route
             path="/admin"
             element={
-              <AdminProtected>
+              <ProtectedRoute role="admin">
                 <AdminDashboard />
-              </AdminProtected>
+              </ProtectedRoute>
             }
           />
 
@@ -58,9 +57,9 @@ export default function App() {
           <Route
             path="/team"
             element={
-              <TeamProtected>
+              <ProtectedRoute role="team">
                 <TeamDashboard />
-              </TeamProtected>
+              </ProtectedRoute>
             }
           />
 

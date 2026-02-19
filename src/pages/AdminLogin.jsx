@@ -23,10 +23,15 @@ export default function AdminLogin() {
         password,
       });
 
+      // ✅ STORE TOKEN
       localStorage.setItem("token", res.data.token);
+
+      // optional admin info
       localStorage.setItem("adminInfo", JSON.stringify(res.data.admin));
 
+      // 🔥 FIX: REDIRECT TO ADMIN DASHBOARD
       window.location.href = "/admin";
+
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     } finally {
@@ -67,7 +72,7 @@ export default function AdminLogin() {
   );
 }
 
-/* ✅ REQUIRED STYLES OBJECT */
+/* STYLES */
 const styles = {
   page: {
     minHeight: "100vh",
@@ -77,7 +82,6 @@ const styles = {
     alignItems: "center",
     fontFamily: "Segoe UI",
   },
-
   card: {
     width: 420,
     padding: 40,
@@ -87,21 +91,18 @@ const styles = {
     boxShadow: "0 0 40px rgba(0,255,157,0.1)",
     textAlign: "center",
   },
-
   logo: {
     fontSize: 40,
     fontWeight: "bold",
     color: "#00ff9d",
     marginBottom: 10,
   },
-
   subtitle: {
     fontSize: 12,
     color: "#55557a",
     letterSpacing: "3px",
     marginBottom: 25,
   },
-
   input: {
     width: "100%",
     padding: 14,
@@ -112,7 +113,6 @@ const styles = {
     color: "#fff",
     fontSize: 14,
   },
-
   btn: {
     width: "100%",
     padding: 14,
@@ -123,7 +123,6 @@ const styles = {
     cursor: "pointer",
     borderRadius: 8,
   },
-
   error: {
     marginTop: 14,
     color: "#ff4d6d",
