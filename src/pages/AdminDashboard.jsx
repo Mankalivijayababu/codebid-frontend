@@ -281,3 +281,44 @@ export default function AdminDashboard() {
     </div>
   );
 }
+const styles = {
+  page: {
+    minHeight: "100vh",
+    background: "#05050f",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    color: "#fff",
+    fontFamily: "Segoe UI",
+  },
+
+  card: {
+    width: 400,
+    padding: 30,
+    background: "#0c0c1e",
+    borderRadius: 12,
+    border: "1px solid #1a1a3a",
+  },
+
+  input: {
+    width: "100%",
+    padding: 12,
+    marginBottom: 10,
+    background: "#030308",
+    border: "1px solid #1a1a3a",
+    color: "#fff",
+  },
+
+  btn: {
+    width: "100%",
+    padding: 12,
+    background: "#00ff9d",
+    border: "none",
+    cursor: "pointer",
+  },
+
+  error: {
+    color: "#ff4d6d",
+    marginTop: 10,
+  },
+};
