@@ -29,6 +29,7 @@ export default function AdminDashboard() {
   const [highestBid, setHighestBid] = useState(null);
   const [teamsOnline, setTeamsOnline] = useState(0);
 
+  /* ================= FETCH GAME STATE ================= */
   const fetchState = async () => {
     try {
       const res = await axios.get(`${API}/game/state`, {
@@ -46,6 +47,7 @@ export default function AdminDashboard() {
     if (token) fetchState();
   }, [token]);
 
+  /* ================= SOCKET CONNECTION ================= */
   useEffect(() => {
     if (!token) return;
 
@@ -58,8 +60,9 @@ export default function AdminDashboard() {
       setBids((prev) => {
         const updated = [...prev, data];
         const highest = updated.reduce((max, bid) =>
-          !max || bid.amount > max.amount ? bid : max
-        , null);
+          !max || bid.amount > max.amount ? bid : max,
+          null
+        );
         setHighestBid(highest);
         return updated;
       });
@@ -69,17 +72,16 @@ export default function AdminDashboard() {
       setRound(data);
       setBids([]);
       setHighestBid(null);
-      setTimeLeft(data?.duration || 30);
+      setTimeLeft(30);
       setMessage("🚀 Round Started");
     });
 
-    socket.on("timer:update", (data) => {
-      setTimeLeft(data?.timeLeft || 0);
+    socket.on("bidding:ended", () => {
+      setMessage("⛔ Bidding Ended");
     });
 
     socket.on("round:completed", (data) => {
-      setLeaderboard(data?.leaderboard || []);
-      setMessage(`🏆 Winner: ${data?.winner || ""}`);
+      setMessage(`🏆 Winner: ${data?.winner}`);
       fetchState();
     });
 
@@ -89,6 +91,8 @@ export default function AdminDashboard() {
 
     return () => socket.disconnect();
   }, [token]);
+
+  /* ================= ADMIN ACTIONS ================= */
 
   const startRound = async () => {
     if (!title) return setMessage("Enter question title");
@@ -100,10 +104,59 @@ export default function AdminDashboard() {
         { headers: authHeaders }
       );
       setTitle("");
-    } catch (err) {
+    } catch {
       setMessage("Start failed");
     }
   };
+
+  const endBidding = async () => {
+    try {
+      await axios.post(`${API}/game/end-bidding`, {}, { headers: authHeaders });
+      setMessage("⛔ Bidding Ended");
+    } catch {
+      setMessage("End failed");
+    }
+  };
+
+  const markCorrect = async () => {
+    try {
+      await axios.post(
+        `${API}/game/result`,
+        { result: "correct" },
+        { headers: authHeaders }
+      );
+      setMessage("✅ Answer Marked Correct");
+      fetchState();
+    } catch {
+      setMessage("Correct failed");
+    }
+  };
+
+  const markWrong = async () => {
+    try {
+      await axios.post(
+        `${API}/game/result`,
+        { result: "wrong" },
+        { headers: authHeaders }
+      );
+      setMessage("❌ Answer Marked Wrong");
+      fetchState();
+    } catch {
+      setMessage("Wrong failed");
+    }
+  };
+
+  const resetRound = async () => {
+    try {
+      await axios.patch(`${API}/game/force-reset`, {}, { headers: authHeaders });
+      setMessage("🔄 Round Reset");
+      fetchState();
+    } catch {
+      setMessage("Reset failed");
+    }
+  };
+
+  /* ================= UI ================= */
 
   return (
     <div style={styles.page}>
@@ -117,6 +170,7 @@ export default function AdminDashboard() {
         </div>
 
         <div style={styles.grid}>
+          {/* CURRENT ROUND */}
           <div style={styles.card}>
             <div style={styles.cardTitle}>CURRENT ROUND</div>
             {round ? (
@@ -126,10 +180,11 @@ export default function AdminDashboard() {
                 <div>Status: {round.status}</div>
               </>
             ) : (
-              <div>Waiting...</div>
+              <div>No active round</div>
             )}
           </div>
 
+          {/* HIGHEST BID */}
           <div style={styles.card}>
             <div style={styles.cardTitle}>HIGHEST BID</div>
             {highestBid ? (
@@ -142,6 +197,7 @@ export default function AdminDashboard() {
             )}
           </div>
 
+          {/* ADMIN CONTROLS */}
           <div style={styles.card}>
             <div style={styles.cardTitle}>ADMIN CONTROLS</div>
 
@@ -163,7 +219,23 @@ export default function AdminDashboard() {
             </select>
 
             <button style={styles.startBtn} onClick={startRound}>
-              START ROUND
+              🚀 START ROUND
+            </button>
+
+            <button style={styles.endBtn} onClick={endBidding}>
+              ⛔ END BIDDING
+            </button>
+
+            <button style={styles.correctBtn} onClick={markCorrect}>
+              ✅ MARK CORRECT
+            </button>
+
+            <button style={styles.wrongBtn} onClick={markWrong}>
+              ❌ MARK WRONG
+            </button>
+
+            <button style={styles.resetBtn} onClick={resetRound}>
+              🔄 RESET ROUND
             </button>
           </div>
         </div>
@@ -174,6 +246,8 @@ export default function AdminDashboard() {
   );
 }
 
+/* ================= STYLES ================= */
+
 const styles = {
   page: {
     minHeight: "100vh",
@@ -182,53 +256,24 @@ const styles = {
     padding: 40,
     fontFamily: "Segoe UI",
   },
-  wrapper: {
-    maxWidth: 1200,
-    margin: "auto",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: 30,
-  },
-  logo: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#00ff9d",
-  },
-  sub: {
-    fontSize: 12,
-    color: "#888",
-  },
-  online: {
-    background: "#0c0c1e",
-    padding: 10,
-    borderRadius: 8,
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr",
-    gap: 20,
-  },
-  card: {
-    background: "#0c0c1e",
-    padding: 20,
-    borderRadius: 12,
-  },
-  cardTitle: {
-    fontSize: 14,
-    marginBottom: 10,
-    color: "#00ff9d",
-  },
+  wrapper: { maxWidth: 1200, margin: "auto" },
+  header: { display: "flex", justifyContent: "space-between", marginBottom: 30 },
+  logo: { fontSize: 24, fontWeight: "bold", color: "#00ff9d" },
+  sub: { fontSize: 12, color: "#888" },
+  online: { background: "#0c0c1e", padding: 10, borderRadius: 8 },
+
+  grid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20 },
+
+  card: { background: "#0c0c1e", padding: 20, borderRadius: 12 },
+  cardTitle: { fontSize: 14, marginBottom: 10, color: "#00ff9d" },
   badge: {
     background: "#ffd60a",
     padding: "4px 8px",
     borderRadius: 6,
     color: "#000",
     fontWeight: "bold",
-    display: "inline-block",
-    marginBottom: 10,
   },
+
   input: {
     width: "100%",
     padding: 10,
@@ -237,16 +282,12 @@ const styles = {
     border: "1px solid #1a1a3a",
     color: "#fff",
   },
-  startBtn: {
-    width: "100%",
-    padding: 10,
-    background: "#00ff9d",
-    border: "none",
-    cursor: "pointer",
-  },
-  message: {
-    marginTop: 20,
-    textAlign: "center",
-    color: "#00ff9d",
-  },
+
+  startBtn: { width: "100%", padding: 10, background: "#00ff9d", border: "none" },
+  endBtn: { width: "100%", padding: 10, marginTop: 6, background: "#ff4d6d", border: "none", color:"#fff" },
+  correctBtn: { width: "100%", padding: 10, marginTop: 6, background: "#00c853", border: "none", color:"#fff" },
+  wrongBtn: { width: "100%", padding: 10, marginTop: 6, background: "#d50000", border: "none", color:"#fff" },
+  resetBtn: { width: "100%", padding: 10, marginTop: 6, background: "#2962ff", border: "none", color:"#fff" },
+
+  message: { marginTop: 20, textAlign: "center", color: "#00ff9d" },
 };
