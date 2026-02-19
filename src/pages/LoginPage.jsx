@@ -2,8 +2,11 @@ import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 
-const RAW_API = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
-const API = RAW_API.replace(/\/+$/, "").replace(/\/api$/, "");
+/* 🔥 PRODUCTION API CONFIG */
+const BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const API = `${BASE_URL}/api`;
 
 export default function LoginPage() {
   const [mode, setMode] = useState("team"); // team | signup | admin
@@ -22,7 +25,8 @@ export default function LoginPage() {
   const handleTeamLogin = async () => {
     try {
       setError("");
-      const res = await axios.post(`${API}/api/auth/login`, {
+
+      const res = await axios.post(`${API}/auth/login`, {
         email: form.email,
         password: form.password,
       });
@@ -38,8 +42,10 @@ export default function LoginPage() {
   const handleSignup = async () => {
     try {
       setError("");
-      await axios.post(`${API}/api/auth/signup`, form);
-      alert("Team created! Now login.");
+
+      await axios.post(`${API}/auth/signup`, form);
+
+      alert("Team created successfully! Now login.");
       setMode("team");
     } catch (err) {
       setError(err.response?.data?.message || "Signup failed");
@@ -51,7 +57,7 @@ export default function LoginPage() {
     try {
       setError("");
 
-      const res = await axios.post(`${API}/api/admin/login`, {
+      const res = await axios.post(`${API}/admin/login`, {
         email: form.email,
         password: form.password,
       });
@@ -66,7 +72,7 @@ export default function LoginPage() {
   /* ───────── GOOGLE ADMIN LOGIN ───────── */
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const res = await axios.post(`${API}/api/auth/google`, {
+      const res = await axios.post(`${API}/auth/google`, {
         credential: credentialResponse.credential,
       });
 
@@ -84,7 +90,9 @@ export default function LoginPage() {
       <div style={styles.card}>
 
         {/* TITLE */}
-        <div style={styles.logo}>CODE<span style={{color:"#ffd60a"}}>BID</span></div>
+        <div style={styles.logo}>
+          CODE<span style={{ color: "#ffd60a" }}>BID</span>
+        </div>
         <p style={styles.subtitle}>THE BIDDING CODE CHAMPIONSHIP</p>
 
         {/* TABS */}
@@ -113,7 +121,7 @@ export default function LoginPage() {
 
         {error && <div style={styles.error}>{error}</div>}
 
-        {/* ───────── TEAM LOGIN ───────── */}
+        {/* TEAM LOGIN */}
         {mode === "team" && (
           <>
             <input
@@ -136,13 +144,34 @@ export default function LoginPage() {
           </>
         )}
 
-        {/* ───────── SIGNUP ───────── */}
+        {/* SIGNUP */}
         {mode === "signup" && (
           <>
-            <input name="teamName" placeholder="Team Name" onChange={handleChange} style={styles.input}/>
-            <input name="repName" placeholder="Representative Name" onChange={handleChange} style={styles.input}/>
-            <input name="email" placeholder="Email" onChange={handleChange} style={styles.input}/>
-            <input name="password" type="password" placeholder="Password" onChange={handleChange} style={styles.input}/>
+            <input
+              name="teamName"
+              placeholder="Team Name"
+              onChange={handleChange}
+              style={styles.input}
+            />
+            <input
+              name="repName"
+              placeholder="Representative Name"
+              onChange={handleChange}
+              style={styles.input}
+            />
+            <input
+              name="email"
+              placeholder="Email"
+              onChange={handleChange}
+              style={styles.input}
+            />
+            <input
+              name="password"
+              type="password"
+              placeholder="Password"
+              onChange={handleChange}
+              style={styles.input}
+            />
 
             <button onClick={handleSignup} style={styles.secondaryBtn}>
               CREATE TEAM →
@@ -150,7 +179,7 @@ export default function LoginPage() {
           </>
         )}
 
-        {/* ───────── ADMIN LOGIN ───────── */}
+        {/* ADMIN LOGIN */}
         {mode === "admin" && (
           <>
             <input
@@ -179,13 +208,12 @@ export default function LoginPage() {
             </div>
           </>
         )}
-
       </div>
     </div>
   );
 }
 
-/* ───────────────── STYLES ───────────────── */
+/* STYLES */
 
 const styles = {
   container: {
