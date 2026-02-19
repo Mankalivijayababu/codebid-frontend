@@ -29,7 +29,6 @@ export default function AdminDashboard() {
   const [highestBid, setHighestBid] = useState(null);
   const [teamsOnline, setTeamsOnline] = useState(0);
 
-  /* FETCH STATE */
   const fetchState = async () => {
     try {
       const res = await axios.get(`${API}/game/state`, {
@@ -39,7 +38,7 @@ export default function AdminDashboard() {
       setRound(res.data?.round || null);
       setLeaderboard(res.data?.leaderboard || []);
     } catch (err) {
-      console.log("State fetch error:", err?.response?.data || err.message);
+      console.log("State fetch error:", err?.message);
     }
   };
 
@@ -47,30 +46,20 @@ export default function AdminDashboard() {
     if (token) fetchState();
   }, [token]);
 
-  /* SOCKET ENGINE */
   useEffect(() => {
     if (!token) return;
 
     const socket = io(SOCKET_URL, {
       auth: { token },
       transports: ["websocket"],
-      reconnection: true,
-      reconnectionAttempts: 10,
-    });
-
-    socket.on("connect", () => {
-      console.log("🟢 Admin socket connected:", socket.id);
     });
 
     socket.on("bid:received", (data) => {
       setBids((prev) => {
-        const updated = [...(prev || []), data];
-
-        const highest = updated.reduce((max, bid) => {
-          if (!max) return bid;
-          return bid.amount > max.amount ? bid : max;
-        }, null);
-
+        const updated = [...prev, data];
+        const highest = updated.reduce((max, bid) =>
+          !max || bid.amount > max.amount ? bid : max
+        , null);
         setHighestBid(highest);
         return updated;
       });
@@ -88,20 +77,9 @@ export default function AdminDashboard() {
       setTimeLeft(data?.timeLeft || 0);
     });
 
-    socket.on("bidding:ended", (data) => {
-      if (data?.winner) setHighestBid(data.winner);
-      setMessage("⏹️ Bidding Closed");
-      fetchState();
-    });
-
     socket.on("round:completed", (data) => {
       setLeaderboard(data?.leaderboard || []);
       setMessage(`🏆 Winner: ${data?.winner || ""}`);
-      fetchState();
-    });
-
-    socket.on("round:force-reset", () => {
-      setMessage("⚠ Round Reset");
       fetchState();
     });
 
@@ -111,8 +89,6 @@ export default function AdminDashboard() {
 
     return () => socket.disconnect();
   }, [token]);
-
-  /* ADMIN ACTIONS */
 
   const startRound = async () => {
     if (!title) return setMessage("Enter question title");
@@ -125,39 +101,7 @@ export default function AdminDashboard() {
       );
       setTitle("");
     } catch (err) {
-      setMessage(err.response?.data?.message || "Start failed");
-    }
-  };
-
-  const endBidding = async () => {
-    try {
-      await axios.post(`${API}/game/end-bidding`, {}, { headers: authHeaders });
-    } catch (err) {
-      setMessage(err.response?.data?.message || "End failed");
-    }
-  };
-
-  const markResult = async (result) => {
-    try {
-      await axios.post(
-        `${API}/game/result`,
-        { result },
-        { headers: authHeaders }
-      );
-    } catch (err) {
-      setMessage(err.response?.data?.message || "Result failed");
-    }
-  };
-
-  const forceReset = async () => {
-    try {
-      await axios.patch(
-        `${API}/game/force-reset`,
-        {},
-        { headers: authHeaders }
-      );
-    } catch (err) {
-      setMessage(err.response?.data?.message || "Reset failed");
+      setMessage("Start failed");
     }
   };
 
@@ -169,19 +113,7 @@ export default function AdminDashboard() {
             <div style={styles.logo}>⚡ CODEBID CONTROL</div>
             <div style={styles.sub}>Realtime Auction Engine</div>
           </div>
-
-          <div style={styles.headerRight}>
-            <div style={styles.online}>
-              🟢 {teamsOnline} Teams Online
-            </div>
-
-            {timeLeft > 0 && (
-              <div style={styles.timerBox}>
-                <div style={styles.timerLabel}>ROUND TIMER</div>
-                <div style={styles.timer}>{timeLeft}s</div>
-              </div>
-            )}
-          </div>
+          <div style={styles.online}>🟢 {teamsOnline} Teams Online</div>
         </div>
 
         <div style={styles.grid}>
@@ -191,40 +123,23 @@ export default function AdminDashboard() {
               <>
                 <h2>{round.title}</h2>
                 <div style={styles.badge}>{round.category}</div>
-                <div style={styles.meta}>Round #{round.roundNumber}</div>
-                <div style={styles.meta}>Status: {round.status}</div>
+                <div>Status: {round.status}</div>
               </>
             ) : (
-              <div style={styles.meta}>Waiting for round start...</div>
+              <div>Waiting...</div>
             )}
           </div>
 
           <div style={styles.card}>
-            <div style={styles.cardTitle}>HIGHEST BID LIVE</div>
+            <div style={styles.cardTitle}>HIGHEST BID</div>
             {highestBid ? (
-              <div style={styles.highestBox}>
-                <div style={styles.highestTeam}>
-                  {highestBid.teamName}
-                </div>
-                <div style={styles.highestAmount}>
-                  🪙 {highestBid.amount}
-                </div>
-              </div>
+              <>
+                <h2>{highestBid.teamName}</h2>
+                <h1>🪙 {highestBid.amount}</h1>
+              </>
             ) : (
-              <div style={styles.meta}>No bids yet</div>
+              <div>No bids yet</div>
             )}
-          </div>
-
-          <div style={styles.card}>
-            <div style={styles.cardTitle}>LIVE BIDS</div>
-            <div style={styles.bidList}>
-              {(bids || []).map((bid, i) => (
-                <div key={i} style={styles.bidRow}>
-                  <span>{bid.teamName}</span>
-                  <span>🪙 {bid.amount}</span>
-                </div>
-              ))}
-            </div>
           </div>
 
           <div style={styles.card}>
@@ -248,30 +163,7 @@ export default function AdminDashboard() {
             </select>
 
             <button style={styles.startBtn} onClick={startRound}>
-              🚀 START ROUND
-            </button>
-
-            <button style={styles.endBtn} onClick={endBidding}>
-              ⏹ END BIDDING
-            </button>
-
-            <div style={styles.judgeRow}>
-              <button
-                style={styles.correctBtn}
-                onClick={() => markResult("correct")}
-              >
-                ✅ CORRECT
-              </button>
-              <button
-                style={styles.wrongBtn}
-                onClick={() => markResult("wrong")}
-              >
-                ❌ WRONG
-              </button>
-            </div>
-
-            <button style={styles.resetBtn} onClick={forceReset}>
-              ⚠ FORCE RESET
+              START ROUND
             </button>
           </div>
         </div>
@@ -281,44 +173,80 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
 const styles = {
   page: {
     minHeight: "100vh",
     background: "#05050f",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
     color: "#fff",
+    padding: 40,
     fontFamily: "Segoe UI",
   },
-
-  card: {
-    width: 400,
-    padding: 30,
-    background: "#0c0c1e",
-    borderRadius: 12,
-    border: "1px solid #1a1a3a",
+  wrapper: {
+    maxWidth: 1200,
+    margin: "auto",
   },
-
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginBottom: 30,
+  },
+  logo: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#00ff9d",
+  },
+  sub: {
+    fontSize: 12,
+    color: "#888",
+  },
+  online: {
+    background: "#0c0c1e",
+    padding: 10,
+    borderRadius: 8,
+  },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr",
+    gap: 20,
+  },
+  card: {
+    background: "#0c0c1e",
+    padding: 20,
+    borderRadius: 12,
+  },
+  cardTitle: {
+    fontSize: 14,
+    marginBottom: 10,
+    color: "#00ff9d",
+  },
+  badge: {
+    background: "#ffd60a",
+    padding: "4px 8px",
+    borderRadius: 6,
+    color: "#000",
+    fontWeight: "bold",
+    display: "inline-block",
+    marginBottom: 10,
+  },
   input: {
     width: "100%",
-    padding: 12,
+    padding: 10,
     marginBottom: 10,
     background: "#030308",
     border: "1px solid #1a1a3a",
     color: "#fff",
   },
-
-  btn: {
+  startBtn: {
     width: "100%",
-    padding: 12,
+    padding: 10,
     background: "#00ff9d",
     border: "none",
     cursor: "pointer",
   },
-
-  error: {
-    color: "#ff4d6d",
-    marginTop: 10,
+  message: {
+    marginTop: 20,
+    textAlign: "center",
+    color: "#00ff9d",
   },
 };
