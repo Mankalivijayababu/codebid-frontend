@@ -10,8 +10,13 @@ import TeamDashboard from "./pages/TeamDashboard";
  * 🔐 Admin Route Protection
  */
 function AdminProtected({ children }) {
-  const token = localStorage.getItem("adminToken");
-  return token ? children : <Navigate to="/admin-login" />;
+  const token = localStorage.getItem("token"); // ✅ FIXED
+
+  if (!token) {
+    return <Navigate to="/admin-login" replace />;
+  }
+
+  return children;
 }
 
 /**
@@ -19,7 +24,12 @@ function AdminProtected({ children }) {
  */
 function TeamProtected({ children }) {
   const token = localStorage.getItem("token");
-  return token ? children : <Navigate to="/" />;
+
+  if (!token) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
 }
 
 export default function App() {
@@ -55,7 +65,7 @@ export default function App() {
           />
 
           {/* FALLBACK */}
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
 
         </Routes>
       </BrowserRouter>
