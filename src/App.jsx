@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import jwt_decode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";   // ✅ FIXED
 
 import LoginPage from "./pages/LoginPage";
 import AdminLogin from "./pages/AdminLogin";
@@ -18,9 +18,8 @@ function ProtectedRoute({ children, role }) {
   }
 
   try {
-    const decoded = jwt_decode(token);
+    const decoded = jwtDecode(token);  // ✅ FIXED
 
-    // 🔥 Role validation
     if (decoded.role !== role) {
       return <Navigate to="/" replace />;
     }
@@ -37,13 +36,9 @@ export default function App() {
       <BrowserRouter>
         <Routes>
 
-          {/* MAIN LOGIN (TEAM + ADMIN TAB VERSION) */}
           <Route path="/" element={<LoginPage />} />
-
-          {/* SEPARATE ADMIN LOGIN PAGE */}
           <Route path="/admin-login" element={<AdminLogin />} />
 
-          {/* ADMIN DASHBOARD */}
           <Route
             path="/admin"
             element={
@@ -53,7 +48,6 @@ export default function App() {
             }
           />
 
-          {/* TEAM DASHBOARD */}
           <Route
             path="/team"
             element={
@@ -63,7 +57,6 @@ export default function App() {
             }
           />
 
-          {/* FALLBACK */}
           <Route path="*" element={<Navigate to="/" replace />} />
 
         </Routes>
