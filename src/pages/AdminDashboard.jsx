@@ -270,3 +270,118 @@ export default function AdminDashboard() {
     </div>
   );
 }
+/* ================= CLEAN STYLES ================= */
+
+const styles = {
+  page: {
+    minHeight: "100vh",
+    background: "#05050f",
+    color: "#fff",
+    padding: 30,
+    fontFamily: "Segoe UI",
+  },
+
+  wrapper: { maxWidth: 1300, margin: "auto" },
+
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginBottom: 25,
+    alignItems: "center",
+  },
+
+  logo: { fontSize: 24, fontWeight: "bold", color: "#00ff9d" },
+  sub: { fontSize: 12, color: "#888" },
+  online: { background: "#0c0c1e", padding: 10, borderRadius: 8 },
+
+  topGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1.2fr 1fr",
+    gap: 20,
+    marginBottom: 25,
+  },
+
+  card: {
+    background: "#0c0c1e",
+    padding: 20,
+    borderRadius: 12,
+  },
+
+  cardCenter: {
+    background: "#0c0c1e",
+    padding: 20,
+    borderRadius: 12,
+    textAlign: "center",
+  },
+
+  cardTitle: {
+    fontSize: 14,
+    marginBottom: 10,
+    color: "#00ff9d",
+  },
+
+  roundTitle: { marginBottom: 6 },
+
+  badge: {
+    background: "#ffd60a",
+    padding: "4px 8px",
+    borderRadius: 6,
+    color: "#000",
+    fontWeight: "bold",
+    display: "inline-block",
+    marginBottom: 8,
+  },
+
+  bidTeam: { marginBottom: 8 },
+  bidAmount: { fontSize: 42, margin: 0 },
+
+  input: {
+    width: "100%",
+    padding: 10,
+    marginBottom: 10,
+    background: "#030308",
+    border: "1px solid #1a1a3a",
+    color: "#fff",
+    borderRadius: 6,
+  },
+
+  btnGroup: {
+    display: "flex",
+    gap: 10,
+    marginBottom: 10,
+  },
+
+  startBtn: { flex: 1, padding: 10, background: "#00ff9d", border: "none" },
+  endBtn: { flex: 1, padding: 10, background: "#ff4d6d", border: "none", color:"#fff" },
+  correctBtn: { flex: 1, padding: 10, background: "#00c853", border: "none", color:"#fff" },
+  wrongBtn: { flex: 1, padding: 10, background: "#d50000", border: "none", color:"#fff" },
+  resetBtn: { width: "100%", padding: 10, background: "#2962ff", border: "none", color:"#fff" },
+
+  leaderboardCard: {
+    background: "#0c0c1e",
+    padding: 20,
+    borderRadius: 12,
+  },
+
+  leaderRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: 12,
+    borderBottom: "1px solid rgba(255,255,255,0.05)",
+  },
+
+  winnerRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: 12,
+    background: "rgba(0,255,157,0.15)",
+    borderRadius: 6,
+    fontWeight: "bold",
+  },
+
+  message: {
+    marginTop: 20,
+    textAlign: "center",
+    color: "#00ff9d",
+  },
+};
