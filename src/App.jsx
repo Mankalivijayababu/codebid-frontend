@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";   // ✅ FIXED
+import { jwtDecode } from "jwt-decode";
 
 import LoginPage from "./pages/LoginPage";
 import AdminLogin from "./pages/AdminLogin";
@@ -8,7 +8,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import TeamDashboard from "./pages/TeamDashboard";
 
 /**
- * 🔐 Generic Role Protection
+ * 🔐 Role-based Protected Route
  */
 function ProtectedRoute({ children, role }) {
   const token = localStorage.getItem("token");
@@ -18,10 +18,20 @@ function ProtectedRoute({ children, role }) {
   }
 
   try {
-    const decoded = jwtDecode(token);  // ✅ FIXED
+    const decoded = jwtDecode(token);
 
-    if (decoded.role !== role) {
-      return <Navigate to="/" replace />;
+    // 🛡 ADMIN ACCESS (admin + superadmin allowed)
+    if (role === "admin") {
+      if (!["admin", "superadmin"].includes(decoded.role)) {
+        return <Navigate to="/" replace />;
+      }
+    }
+
+    // 👥 TEAM ACCESS
+    if (role === "team") {
+      if (decoded.role !== "team") {
+        return <Navigate to="/" replace />;
+      }
     }
 
     return children;
@@ -36,9 +46,13 @@ export default function App() {
       <BrowserRouter>
         <Routes>
 
+          {/* LOGIN */}
           <Route path="/" element={<LoginPage />} />
+
+          {/* ADMIN LOGIN */}
           <Route path="/admin-login" element={<AdminLogin />} />
 
+          {/* ADMIN DASHBOARD */}
           <Route
             path="/admin"
             element={
@@ -48,6 +62,7 @@ export default function App() {
             }
           />
 
+          {/* TEAM DASHBOARD */}
           <Route
             path="/team"
             element={
@@ -57,6 +72,7 @@ export default function App() {
             }
           />
 
+          {/* FALLBACK */}
           <Route path="*" element={<Navigate to="/" replace />} />
 
         </Routes>
