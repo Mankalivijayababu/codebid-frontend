@@ -22,6 +22,11 @@ export default function TeamDashboard() {
   const [alreadyBid, setAlreadyBid] = useState(false);
   const [placingBid, setPlacingBid] = useState(false);
 
+  const [winnerName, setWinnerName] = useState("");
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [result, setResult] = useState(null);
+
   /* FETCH GAME STATE */
   const fetchState = async () => {
     try {
@@ -58,27 +63,48 @@ export default function TeamDashboard() {
 
     socket.on("connect", () => fetchState());
 
-    socket.on("round:started", (data) => {
-      setRound(data);
-      setAlreadyBid(false);
-      setBidAmount("");
-      setTimeLeft(data?.duration || 30);
-      setMessage("🚀 New bidding round started!");
+    /* ROUND START */
+    socket.on("projector:show-question", (data) => {
+      setRound((prev) => ({
+        ...prev,
+        title: data.question,
+        options: data.options,
+        status: "bidding",
+      }));
+      setSelectedAnswer(null);
+      setSubmitted(false);
+      setResult(null);
     });
 
-    socket.on("timer:update", (data) => {
-      setTimeLeft(data?.timeLeft || 0);
+    /* TIMER */
+    socket.on("projector:timer", ({ timeLeft }) => {
+      setTimeLeft(timeLeft);
     });
 
-    socket.on("bidding:ended", () => {
-      setTimeLeft(0);
-      setMessage("⏹️ Bidding closed. Waiting for result...");
+    socket.on("projector:timeup", () => {
+      setSubmitted(true);
+    });
+
+    /* WINNER ANNOUNCED */
+    socket.on("projector:show-winner", (data) => {
+      setWinnerName(data.teamName);
+      setSubmitted(false);
+    });
+
+    /* SHOW SELECTED ANSWER */
+    socket.on("projector:selected-answer", (data) => {
+      setSelectedAnswer(data.answer);
+    });
+
+    /* RESULT */
+    socket.on("projector:result", (data) => {
+      setResult(data.result);
       fetchState();
     });
 
-    socket.on("round:completed", (data) => {
-      setMessage(`🏆 Winner: ${data?.winner || ""}`);
-      fetchState();
+    /* LEADERBOARD */
+    socket.on("leaderboard:update", (teams) => {
+      setLeaderboard(teams);
     });
 
     return () => socket.disconnect();
@@ -115,6 +141,18 @@ export default function TeamDashboard() {
     }
   };
 
+  /* SUBMIT ANSWER */
+  const submitAnswer = () => {
+    if (!selectedAnswer || submitted) return;
+
+    const socket = io(SOCKET_URL, { auth: { token } });
+    socket.emit("team:submit-answer", { answer: selectedAnswer });
+
+    setSubmitted(true);
+  };
+
+  const isWinner = team?.teamName === winnerName;
+
   return (
     <div style={styles.page}>
 
@@ -143,32 +181,45 @@ export default function TeamDashboard() {
                 <h2>{round.title}</h2>
                 <p>{round.category}</p>
                 <p>Status: {round.status}</p>
+
+                {/* ANSWERING PANEL */}
+                {round.status === "reviewing" && (
+                  <>
+                    {isWinner ? (
+                      <>
+                        <h3>Select Answer</h3>
+                        {round.options?.map((opt, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setSelectedAnswer(opt)}
+                            disabled={submitted}
+                            style={{
+                              ...styles.optionBtn,
+                              background:
+                                selectedAnswer === opt ? "#00ff9d" : "#111",
+                            }}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+
+                        <button
+                          onClick={submitAnswer}
+                          disabled={submitted}
+                          style={styles.submitBtn}
+                        >
+                          Submit Answer
+                        </button>
+                      </>
+                    ) : (
+                      <p>Waiting for winner team to answer...</p>
+                    )}
+                  </>
+                )}
               </>
             ) : (
               <p>Waiting for admin...</p>
             )}
-
-            <div style={{ marginTop: 20 }}>
-              {alreadyBid ? (
-                <div style={styles.locked}>🔒 Bid Locked</div>
-              ) : (
-                <>
-                  <input
-                    value={bidAmount}
-                    onChange={(e) => setBidAmount(e.target.value)}
-                    placeholder="Enter bid amount"
-                    style={styles.input}
-                  />
-
-                  <button
-                    onClick={placeBid}
-                    style={styles.bidBtn}
-                  >
-                    {placingBid ? "Placing..." : "LOCK BID"}
-                  </button>
-                </>
-              )}
-            </div>
 
             {message && <p style={styles.msg}>{message}</p>}
           </div>
@@ -179,11 +230,8 @@ export default function TeamDashboard() {
 
             {leaderboard.map((t, i) => (
               <div key={i} style={styles.leaderRow}>
-                <div style={styles.leftRow}>
-                  #{t.rank} {t.teamName}
-                  {team && t.teamName === team.teamName && (
-                    <span style={styles.youTag}> (You)</span>
-                  )}
+                <div>
+                  #{i + 1} {t.teamName}
                 </div>
                 <div>🪙 {t.coins}</div>
               </div>
@@ -196,7 +244,7 @@ export default function TeamDashboard() {
   );
 }
 
-/* ===== REFINED STYLES ===== */
+/* ===== STYLES ===== */
 
 const styles = {
   page: {
@@ -204,13 +252,9 @@ const styles = {
     background: "linear-gradient(135deg,#05050f,#0d0d2b)",
     color: "#fff",
     padding: 30,
-    fontFamily: "Segoe UI",
   },
 
-  wrapper: {
-    maxWidth: 1200,
-    margin: "auto",
-  },
+  wrapper: { maxWidth: 1200, margin: "auto" },
 
   timerBar: {
     background: "#ff4d6d",
@@ -221,17 +265,9 @@ const styles = {
     borderRadius: 8,
   },
 
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1.5fr 1fr",
-    gap: 25,
-  },
+  grid: { display: "grid", gridTemplateColumns: "1fr 1.5fr 1fr", gap: 25 },
 
-  card: {
-    background: "rgba(255,255,255,0.05)",
-    padding: 20,
-    borderRadius: 14,
-  },
+  card: { background: "rgba(255,255,255,0.05)", padding: 20, borderRadius: 14 },
 
   cardCenter: {
     background: "rgba(255,255,255,0.05)",
@@ -240,44 +276,29 @@ const styles = {
     textAlign: "center",
   },
 
-  title: {
-    color: "#00ff9d",
-    marginBottom: 15,
-  },
+  title: { color: "#00ff9d", marginBottom: 15 },
 
-  teamName: {
-    marginBottom: 10,
-  },
+  teamName: { marginBottom: 10 },
 
-  coins: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#ffd60a",
-  },
+  coins: { fontSize: 22, fontWeight: "bold", color: "#ffd60a" },
 
-  input: {
+  optionBtn: {
+    display: "block",
     width: "100%",
-    padding: 12,
-    borderRadius: 8,
-    border: "1px solid #1a1a3a",
-    background: "#030308",
+    padding: 10,
+    margin: "10px 0",
     color: "#fff",
-    marginBottom: 10,
+    border: "1px solid #333",
+    borderRadius: 8,
   },
 
-  bidBtn: {
+  submitBtn: {
     width: "100%",
     padding: 12,
-    background: "#00ff9d",
+    background: "green",
     border: "none",
-    borderRadius: 8,
-    fontWeight: "bold",
-    cursor: "pointer",
-  },
-
-  locked: {
-    padding: 12,
-    background: "rgba(255,77,109,0.15)",
+    color: "#fff",
+    marginTop: 10,
     borderRadius: 8,
   },
 
@@ -288,19 +309,5 @@ const styles = {
     borderBottom: "1px solid rgba(255,255,255,0.06)",
   },
 
-  leftRow: {
-    display: "flex",
-    alignItems: "center",
-  },
-
-  youTag: {
-    color: "#00ff9d",
-    fontWeight: "bold",
-    marginLeft: 6,
-  },
-
-  msg: {
-    marginTop: 15,
-    color: "#00ff9d",
-  },
+  msg: { marginTop: 15, color: "#00ff9d" },
 };

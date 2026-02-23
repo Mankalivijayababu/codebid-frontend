@@ -6,6 +6,9 @@ import LoginPage from "./pages/LoginPage";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import TeamDashboard from "./pages/TeamDashboard";
+import ProjectorScreen from "./pages/ProjectorScreen";
+
+
 
 /**
  * 🔐 Role-based Protected Route
@@ -74,6 +77,7 @@ export default function App() {
 
           {/* FALLBACK */}
           <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/projector" element={<ProjectorScreen />} />
 
         </Routes>
       </BrowserRouter>
